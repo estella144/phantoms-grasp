@@ -1,0 +1,56 @@
+{
+    "data_version": 1,
+    "map_version": 1,
+    "entrance_room": 0,
+    "spawn_room": 0,
+    "room_data": [
+        {
+            "number": 0,
+            "name": "Entrance",
+            "description": "A creaky wooden door leads into the dimly lit house. The air smells of dust and decay.",
+            "lit": true,
+            "locked": false,
+            "exits": {"north": 1}
+        },
+        {
+            "number": 1,
+            "name": "Hall",
+            "description": "A long corridor stretches into darkness, paintings hanging from the walls.",
+            "lit": true,
+            "locked": false,
+            "exits": {"south": 0, "east": 2, "down": 3, "up": 4}
+        },
+        {
+            "number": 2,
+            "name": "Dining Room",
+            "description": "An old wooden table is set with dusty plates, as if expecting unseen guests.",
+            "lit": false,
+            "locked": false,
+            "exits": {"west": 1}
+        },
+        {
+            "number": 3,
+            "name": "Basement",
+            "description": "The cold, damp air surrounds you. Something moves in the shadows.",
+            "lit": false,
+            "locked": true,
+            "exits": {"up": 1}
+        },
+        {
+            "number": 4,
+            "name": "Attic",
+            "description": "Cobwebs hang from the rafters, and an old chest sits in the corner.",
+            "lit": false,
+            "locked": false,
+            "exits": {"down": 1, "east": 5}
+        },
+        {
+            "number": 5,
+            "name": "Bedroom",
+            "description": "A grand bed covered in dust dominates the room. A mirror reflects something that shouldn't be there.",
+            "lit": true,
+            "locked": true,
+            "exits": {"west": 4}
+        }
+    ]
+}
