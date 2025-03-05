@@ -1,10 +1,21 @@
 import json
 
 class Room:
-    """Create an object which represents a room."""
+    """
+    Create an object which represents a room.
 
-    def __init__(self, number: int, name: str, description: str, lit: bool,
-                 locked: bool, exits: dict[str, int]) -> None:
+    Attributes:
+        number (int): The unique identifier of the room.
+        name (str): The name of the room.
+        description (str): A brief description of the room.
+        lit (bool): Whether the room is lit or not.
+        locked (bool): Whether the room is locked or not.
+        exits (dict[str, int]): A dictionary mapping directions to room numbers.
+    """
+
+    def __init__(
+            self, number: int, name: str, description: str, lit: bool,
+            locked: bool, exits: dict[str, int]) -> None:
         self.number = number
         self.name = name
         self.description = description
@@ -17,18 +28,15 @@ def get_map_data(mapfile: str) -> tuple:
     Loads map data from a JSON file.
 
     Parameters:
-    -----------
-
     mapfile : str
-    The file to load the map data from.#
+    The file to load the map data from.
 
     Returns:
-    -------
-
     tuple
         Contains two lists: rooms and metadata.
         rooms: list[Room] - contains the map data.
-        metadata: dict[str, str] - contains the entrance room number."""
+        metadata: dict[str, str] - contains the entrance room number.
+    """
     with open(mapfile, 'r') as f:
         data = json.load(f)
 
@@ -60,16 +68,18 @@ def main() -> None:
         else:
             print(game_map[current_room].name)
             print(game_map[current_room].description)
+        
         new_room_number = int(input("Go to a room number: "))
         try:
             new_room = game_map[new_room_number]
         except IndexError:
             print("There is no room with that number!")
             continue
+        
         if new_room.locked == True:
             print("This room is locked. You can't go in there!")
-        else:
-            current_room = new_room_number
+            continue
+        current_room = new_room_number
 
 if __name__ == "__main__":
     main()
