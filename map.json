@@ -2,12 +2,12 @@
     "data_version": 1,
     "map_version": 1,
     "entrance_room": 0,
-    "spawn_room": 0,
+    "spawn_room": 1,
     "room_data": [
         {
             "number": 0,
             "name": "Entrance",
-            "description": "A creaky wooden door leads into the dimly lit house. The air smells of dust and decay.",
+            "description": "A creaky wooden door leads out of the dimly lit house. The air smells of dust and decay.",
             "lit": true,
             "locked": false,
             "exits": {"north": 1}

@@ -1,5 +1,7 @@
 import json
 
+VERSION = "0.1.0"
+
 class Room:
     """
     Create an object which represents a room.
@@ -28,7 +30,7 @@ def get_map_data(mapfile: str) -> tuple:
     Loads map data from a JSON file.
 
     Parameters:
-    mapfile : str
+    mapfile: str
     The file to load the map data from.
 
     Returns:
@@ -42,7 +44,14 @@ def get_map_data(mapfile: str) -> tuple:
 
     valid_data_versions = [1]
     rooms = []
-    metadata = {"entrance_room": data['entrance_room']}
+    metadata = {"data_version": data['data_version'],
+                "entrance_room": data['entrance_room'],
+                "spawn_room": data['spawn_room']}
+
+    if metadata['data_version'] not in valid_data_versions:
+        print("Error: Incompatible map data.")
+        input("Press [Enter] to quit")
+        quit()
     
     for room_data in data['room_data']:
         room = Room(
@@ -58,18 +67,34 @@ def get_map_data(mapfile: str) -> tuple:
     return rooms, metadata
 
 def main() -> None:
+    """Main game loop."""
     game_map, metadata = get_map_data("map.json")
-    print(game_map)
     leave = False
-    current_room = 0
+    current_room = metadata['spawn_room']
+    entrance_room = metadata['entrance_room']
+    
     while not leave:
         if game_map[current_room].lit == False:
             print("This is a dark room, you can't see anything.")
         else:
             print(game_map[current_room].name)
             print(game_map[current_room].description)
+
+        if current_room == 0:
+            choice = input("You have reached the entrance. Do you want to leave? [Y/N, default: N] ").upper()
+            if choice == "Y":
+                leave = True
+                break
+
+        try:
+            new_room_number = int(input("Go to a room number: "))
+            if new_room_number < 0:
+                print("That's not a positive whole number!")
+                continue
+        except ValueError:
+            print("That's not a positive whole number!")
+            continue
         
-        new_room_number = int(input("Go to a room number: "))
         try:
             new_room = game_map[new_room_number]
         except IndexError:
@@ -80,6 +105,10 @@ def main() -> None:
             print("This room is locked. You can't go in there!")
             continue
         current_room = new_room_number
+
+    print("The door opens, revealing the night sky outside.")
+    print("You have escaped.")
+    input("Press [Enter] to exit and quit")
 
 if __name__ == "__main__":
     main()
