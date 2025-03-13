@@ -1,6 +1,6 @@
 {
-    "data_version": 1,
-    "map_version": 1,
+    "data_version": 2,
+    "map_version": 2,
     "entrance_room": 0,
     "spawn_room": 1,
     "room_data": [
@@ -10,7 +10,8 @@
             "description": "A creaky wooden door leads out of the dimly lit house. The air smells of dust and decay.",
             "lit": true,
             "locked": false,
-            "exits": {"north": 1}
+            "exits": {"north": 1},
+            "items": []
         },
         {
             "number": 1,
@@ -18,7 +19,16 @@
             "description": "A long corridor stretches into darkness, paintings hanging from the walls.",
             "lit": true,
             "locked": false,
-            "exits": {"south": 0, "east": 2, "down": 3, "up": 4}
+            "exits": {"south": 0, "east": 2, "down": 3, "up": 4},
+            "items": [
+                {
+                    "name": "Candle",
+                    "description": "A small wax candle. It might light up dark places.",
+                    "type": "Item",
+                    "is_held": false,
+                    "provides_light": true
+                }
+            ]
         },
         {
             "number": 2,
@@ -26,15 +36,26 @@
             "description": "An old wooden table is set with dusty plates, as if expecting unseen guests.",
             "lit": false,
             "locked": false,
-            "exits": {"west": 1}
+            "exits": {"west": 1},
+            "items": []
         },
         {
             "number": 3,
             "name": "Basement",
             "description": "The cold, damp air surrounds you. Something moves in the shadows.",
             "lit": false,
-            "locked": true,
-            "exits": {"up": 1}
+            "locked": false,
+            "exits": {"up": 1},
+            "items": [
+                {
+                    "name": "Rusty Key",
+                    "description": "An old key covered in rust. It might unlock something.",
+                    "type": "Key",
+                    "is_held": false,
+                    "provides_light": false,
+                    "rooms_unlocked": [5]
+                }
+            ]
         },
         {
             "number": 4,
@@ -42,7 +63,8 @@
             "description": "Cobwebs hang from the rafters, and an old chest sits in the corner.",
             "lit": false,
             "locked": false,
-            "exits": {"down": 1, "east": 5}
+            "exits": {"down": 1, "east": 5},
+            "items": []
         },
         {
             "number": 5,
@@ -50,7 +72,8 @@
             "description": "A grand bed covered in dust dominates the room. A mirror reflects something that shouldn't be there.",
             "lit": true,
             "locked": true,
-            "exits": {"west": 4}
+            "exits": {"west": 4},
+            "items": []
         }
     ]
 }

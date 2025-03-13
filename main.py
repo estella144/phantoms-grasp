@@ -1,6 +1,6 @@
 import json
 
-VERSION = "0.2.0.dev1"
+VERSION = "0.2.0.dev3"
 
 class Item:
     """
@@ -10,16 +10,19 @@ class Item:
         name: str - The name of the item.
         description: str - A brief description of the item.
         location: int - The location of the item as a map index.
-        -1 indicates it is in the player's inventory.
+        999 indicates it is in the player's inventory.
         is_held: bool - Whether the item is held by the player or not.
+        provides_light: bool - Whether the item lights up rooms.
     """
 
     def __init__(
             self, name: str, description: str, location: int,
-            is_held: bool) -> None:
+            is_held: bool, provides_light: bool) -> None:
+        self.name = name
         self.description = description
         self.location = location
         self.is_held = is_held
+        self.provides_light = provides_light
 
 class Key(Item):
     """
@@ -31,9 +34,18 @@ class Key(Item):
 
     def __init__(
             self, name: str, description: str, location: int,
-            is_held: bool, rooms = list[int]) -> None:
-        Item.__init__(self, name, description, location, is_held)
-        self.rooms = rooms
+            is_held: bool, provides_light: bool,
+            rooms_unlocked = list[int]) -> None:
+        Item.__init__(
+            self,
+            name,
+            description,
+            location,
+            is_held,
+            provides_light
+        )
+        self.rooms_unlocked = rooms_unlocked
+        
 
 class Room:
     """
@@ -45,18 +57,41 @@ class Room:
         description: str - A brief description of the room.
         is_lit: bool - Whether the room is lit or not.
         is_locked: bool - Whether the room is locked or not.
-        exits (dict[str, int]): A dictionary mapping directions to room numbers.
+        exits (dict[str, int])
+            A dictionary mapping directions to room numbers.
     """
 
     def __init__(
-            self, number: int, name: str, description: str, is_lit: bool,
-            is_locked: bool, exits: dict[str, int]) -> None:
+            self, number: int, name: str, description: str,
+            is_lit: bool, is_locked: bool, exits: dict[str, int]
+        ) -> None:
         self.number = number
         self.name = name
         self.description = description
-        self.lit = lit
-        self.locked = locked
+        self.is_lit = is_lit
+        self.is_locked = is_locked
         self.exits = exits
+
+def create_item(location: int, item_data: dict) -> Item:
+    if item_data["type"] == "Item":
+        return Item(
+            name=item_data["name"],
+            description=item_data["description"],
+            location=location,
+            is_held=item_data["is_held"],
+            provides_light=item_data["provides_light"]
+        )
+    elif item_data["type"] == "Key":
+        return Key(
+            name=item_data["name"],
+            description=item_data["description"],
+            location=location,
+            is_held=item_data["is_held"],
+            provides_light=item_data["provides_light"],
+            rooms_unlocked=item_data.get("rooms_unlocked", [])
+        )
+    else:
+        raise ValueError(f"Unknown item type: {item_data['type']}")
 
 def get_map_data(mapfile: str) -> tuple:
     """
@@ -75,8 +110,9 @@ def get_map_data(mapfile: str) -> tuple:
     with open(mapfile, 'r') as f:
         data = json.load(f)
 
-    valid_data_versions = [1]
+    valid_data_versions = [2]
     rooms = []
+    items = []
     metadata = {"data_version": data['data_version'],
                 "entrance_room": data['entrance_room'],
                 "spawn_room": data['spawn_room']}
@@ -91,36 +127,41 @@ def get_map_data(mapfile: str) -> tuple:
             number=room_data['number'],
             name=room_data['name'],
             description=room_data['description'],
-            lit=room_data['lit'],
-            locked=room_data['locked'],
+            is_lit=room_data['lit'],
+            is_locked=room_data['locked'],
             exits=room_data['exits']
         )
         rooms.append(room)
+
+        for item_data in room_data.get("items", []):
+            item = create_item(room_data['number'], item_data)
     
-    return rooms, metadata
+    return rooms, items, metadata
 
 def main() -> None:
     """Main game loop."""
     print()
     
-    game_map, metadata = get_map_data("map.json")
+    game_map, items, metadata = get_map_data("map.json")
     leave = False
     current_room = metadata['spawn_room']
     entrance_room = metadata['entrance_room']
     
     while not leave:
-        if game_map[current_room].lit == False:
+        if game_map[current_room].is_lit == False:
             print("This is a dark room, you can't see anything.")
         else:
             print(game_map[current_room].name)
             print(game_map[current_room].description)
 
         if current_room == 0:
-            choice = input("You have reached the entrance. Do you want to leave? [Y/N, default: N] ").upper()
+            choice = input("You have reached the entrance.",
+                           "Do you want to leave?",
+                           "[Y/N, default: N] ").upper()
             if choice == "Y":
                 leave = True
                 break
-
+        
         try:
             new_room_number = int(input("Go to a room number: "))
             if new_room_number < 0:
@@ -136,7 +177,7 @@ def main() -> None:
             print("There is no room with that number!")
             continue
         
-        if new_room.locked == True:
+        if new_room.is_locked == True:
             print("This room is locked. You can't go in there!")
             continue
         current_room = new_room_number
