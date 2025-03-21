@@ -18,7 +18,8 @@ class Item:
 
     def __init__(
             self, name: str, description: str, location: int,
-            is_held: bool, provides_light: bool) -> None:
+            is_held: bool, provides_light: bool
+        ) -> None:
         self.name = name
         self.description = description
         self.location = location
@@ -36,7 +37,8 @@ class Key(Item):
     def __init__(
             self, name: str, description: str, location: int,
             is_held: bool, provides_light: bool,
-            rooms_unlocked = list[int]) -> None:
+            rooms_unlocked = list[int]
+        ) -> None:
         Item.__init__(
             self,
             name,
@@ -75,8 +77,8 @@ class Room:
 
 def check_key(room_number: int, items: list[Item]):
     for item in items:
-        if (isinstance(item, Key) and item["location"] == 999):
-            if room_number in item["unlocks"]:
+        if (isinstance(item, Key) and item.location == 999):
+            if room_number in item.rooms_unlocked:
                 return True
     return False
 
@@ -162,7 +164,6 @@ def get_map_data(mapfile: str) -> tuple:
         )
         rooms.append(room)
 
-        print(room_data.get("items", []))
         for item_data in room_data.get("items", []):
             item = create_item(room_data['number'], item_data)
             items.append(item)
@@ -181,11 +182,9 @@ def main() -> None:
     
     while not leave:
 
-        print(items)
         player_light = False
         for item in items:
-            if (item.provides_light == True
-                and item.location == 999):
+            if (item.provides_light == True and item.location == 999):
                 player_light = True
         
         if (game_map[current_room].is_lit == False
@@ -194,21 +193,32 @@ def main() -> None:
         else:
             print(game_map[current_room].name)
             print(game_map[current_room].description)
+
+            if current_room == 0:
+                choice = input("You have reached the entrance. " +
+                               "Do you want to leave? " +
+                               "[Y/N, default: N] ").upper()
+                if choice == "Y":
+                    leave = True
+                    break
+            
             for item in items:
                 if item.location == current_room:
                     print(f"There is a {item.name} in the room.")
                     pick_up = input("Pick up the item? [Y/N]").lower()
-                    if pick_up == "y":
+                    if (pick_up == "y"
+                        and items_held < INVENTORY_LIMIT):
                         items[items.index(item)].location = 999
                         items_held += 1
-
-        if current_room == 0:
-            choice = input("You have reached the entrance.",
-                           "Do you want to leave?",
-                           "[Y/N, default: N] ").upper()
-            if choice == "Y":
-                leave = True
-                break
+                        print(f"You now have a {item.name}.")
+                
+                elif item.location == 999:
+                    print(f"You have a {item.name}.")
+                    drop = input("Drop the item? [Y/N]").lower()
+                    if drop == "y":
+                        items[items.index(item)].location = current_room
+                        items_held += 1
+                        print(f"You dropped the {item.name}.")
         
         new_room_number = get_new_room_number(len(game_map))
         
