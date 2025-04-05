@@ -1,19 +1,26 @@
 import json
+import platform
 
 INVENTORY_LIMIT = 2
-VERSION = "0.2.0.dev4"
+VERSION = "0.2.1"
+VALID_DIRECTIONS = ['north', 'east', 'south', 'west', 'up', 'down']
 
 class Item:
     """
     Create an object which represents an item.
 
     Attributes:
-        name: str - The name of the item.
-        description: str - A brief description of the item.
-        location: int - The location of the item as a map index.
-        999 indicates it is in the player's inventory.
-        is_held: bool - Whether the item is held by the player or not.
-        provides_light: bool - Whether the item lights up rooms.
+        name: str
+            The name of the item.
+        description: str
+            A brief description of the item.
+        location: int
+            The location of the item as a map index.
+            999 indicates it is in the player's inventory.
+        is_held: bool
+            Whether the item is held by the player or not.
+        provides_light: bool
+            Whether the item lights up rooms.
     """
 
     def __init__(
@@ -75,33 +82,66 @@ class Room:
         self.is_locked = is_locked
         self.exits = exits
 
-def check_key(room_number: int, items: list[Item]):
+def show_help() -> None:
+    """Shows help message, including version and system information."""
+    print(f"Version: {VERSION}")
+    print(f"OS: {platform.system()} {platform.release()} " +
+          f"{platform.version()}")
+    print(f"Python: {platform.python_version()} " +
+          f"({platform.python_branch()}:" +
+          f"{platform.python_revision()})")
+
+    print()
+    print("look - shows room name and description.")
+    print("go <direction: str> - travels in the specified direction.")
+    print("pickup <item: str> - picks up the item.")
+    print("drop <item: str> - drops the item.")
+    print("inventory - shows inventory.")
+    print("leave - leaves house (only works at entrance).")
+    print("help - show this help message.")
+
+def check_key(room_number: int, items: list[Item]) -> bool:
     for item in items:
         if (isinstance(item, Key) and item.location == 999):
             if room_number in item.rooms_unlocked:
                 return True
     return False
 
-def get_new_room_number(map_length: int) -> int:
-    """
-    Requests a room number (map index) and validates it.
-    Returns the desired room number if it is valid, and -1 otherwise.
-    """
+def format_passages(exits: dict[str, int]) -> str:
+    if not exits:
+        return "There are no visible exits from the room."
 
-    try:
-        new_room_number = int(input("Go to a room number: "))
-        if new_room_number < 0:
-            print("That's not a positive whole number!")
-            return -1
-    except ValueError:
-        print("That's not a positive whole number!")
-        return -1
+    directions = []
+    for direction in exits:
+        directions.append(direction)
     
-    if new_room_number >= map_length:
-        print("There is no room with that number!")
-        return -1
+    if len(directions) == 1:
+        return f"There is a passage out of the room going {directions[0]}."
+    elif len(directions) == 2:
+        return f"There are passages out of the room going {directions[0]} and {directions[1]}."
+    else:
+        all_but_last = ", ".join(directions[:-1])
+        return f"There are passages out of the room going {all_but_last} and {directions[-1]}."
+
+def get_new_room_number(
+        game_map: dict, current_room_num: int,
+        direction: str
+    ) -> int:
     
-    return new_room_number
+    direction = direction.lower()
+
+    if direction not in VALID_DIRECTIONS:
+        print(f"'{direction}' is not a valid direction.")
+        return -1
+
+    current_room = game_map[current_room_num]
+
+    if direction in current_room.exits:
+        return current_room.exits[direction]
+    else:
+        print(f"You can't go {direction} from here.")
+        return -1
+
     
 def create_item(location: int, item_data: dict) -> Item:
     if item_data["type"] == "Item":
@@ -171,64 +211,121 @@ def get_map_data(mapfile: str) -> tuple:
     return rooms, items, metadata
 
 def main() -> None:
-    """Main game loop."""
     print()
-    
+
     game_map, items, metadata = get_map_data("map.json")
     leave = False
     current_room = metadata['spawn_room']
     entrance_room = metadata['entrance_room']
     items_held = 0
-    
-    while not leave:
 
-        player_light = False
-        for item in items:
-            if (item.provides_light == True and item.location == 999):
-                player_light = True
-        
-        if (game_map[current_room].is_lit == False
-            and player_light == False):
-            print("This is a dark room, you can't see anything.")
+    def describe_room():
+        player_light = any(item.provides_light
+                           and item.location == 999 for item in items)
+        if not game_map[current_room].is_lit and not player_light:
+            print("This is a dark room. You can't see anything.")
         else:
             print(game_map[current_room].name)
             print(game_map[current_room].description)
 
-            if current_room == 0:
-                choice = input("You have reached the entrance. " +
-                               "Do you want to leave? " +
-                               "[Y/N, default: N] ").upper()
-                if choice == "Y":
-                    leave = True
-                    break
-            
             for item in items:
                 if item.location == current_room:
-                    print(f"There is a {item.name} in the room.")
-                    pick_up = input("Pick up the item? [Y/N]").lower()
-                    if (pick_up == "y"
-                        and items_held < INVENTORY_LIMIT):
-                        items[items.index(item)].location = 999
-                        items_held += 1
-                        print(f"You now have a {item.name}.")
-                
-                elif item.location == 999:
-                    print(f"You have a {item.name}.")
-                    drop = input("Drop the item? [Y/N]").lower()
-                    if drop == "y":
-                        items[items.index(item)].location = current_room
-                        items_held += 1
-                        print(f"You dropped the {item.name}.")
-        
-        new_room_number = get_new_room_number(len(game_map))
-        
-        if new_room_number != -1:
-            # -1 indicates an invalid input
-            if (game_map[new_room_number].is_locked == True
-                and check_key(new_room_number, items) == False):
-                print("This room is locked. Find a key to unlock it.")
+                    print(f"There is a {item.name} here.")
+
+            print(format_passages(game_map[current_room].exits))
+
+    def show_inventory():
+        is_carrying_nothing = True
+        print("You are carrying:")
+        for item in items:
+            if item.location == 999:
+                print(f"- {item.name}")
+                is_carrying_nothing = False
+        if is_carrying_nothing:
+            print("Nothing")
+        print()
+
+    describe_room()
+
+    while not leave:
+        command = input("> ").strip().lower().split()
+
+        if not command:
+            print("Enter 'help' for help.")
+            continue
+
+        if command[0] == "look":
+            describe_room()
+
+        elif command[0] == "inventory":
+            show_inventory()
+
+        elif command[0] == "pickup":
+            if len(command) < 2:
+                print("Pickup what?")
                 continue
+            item_name = " ".join(command[1:])
+            for item in items:
+                if (item.location == current_room
+                    and item.name.lower() == item_name):
+                    if items_held < INVENTORY_LIMIT:
+                        item.location = 999
+                        items_held += 1
+                        print(f"You picked up the {item.name}.")
+                    else:
+                        print("You're carrying too much.")
+                    break
+            else:
+                print("No such item here.")
+
+        elif command[0] == "drop":
+            if len(command) < 2:
+                print("Drop what?")
+                continue
+            item_name = " ".join(command[1:])
+            for item in items:
+                if (item.location == 999
+                    and item.name.lower() == item_name):
+                    item.location = current_room
+                    items_held -= 1
+                    print(f"You dropped the {item.name}.")
+                    break
+            else:
+                print("You're not carrying that.")
+
+        elif command[0] == "go":
+            if len(command) < 2:
+                print("Go where?")
+                continue
+            direction = command[1]
+            new_room_number = get_new_room_number(game_map, current_room, direction)
+
+            if new_room_number == -1:
+                continue
+
+            if (game_map[new_room_number].is_locked
+                and not check_key(new_room_number, items)):
+                print("This room is locked. You need a key.")
+                continue
+
             current_room = new_room_number
+            describe_room()
+
+            if current_room == entrance_room:
+                print("You have reached the entrance. Type 'leave' to exit.")
+
+        elif command[0] == "leave":
+            if current_room == entrance_room:
+                leave = True
+                break
+            else:
+                print("You can't leave from here.")
+
+        elif command[0] == "help":
+            show_help()
+
+        else:
+            print("Unknown command. Enter 'help' for commands.")
 
     print("The door opens, revealing the night sky outside.")
     print("You have escaped.")
