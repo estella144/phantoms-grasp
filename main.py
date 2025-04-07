@@ -2,7 +2,7 @@ import json
 import platform
 
 INVENTORY_LIMIT = 2
-VERSION = "0.2.1"
+VERSION = "0.2.2.dev1"
 VALID_DIRECTIONS = ['north', 'east', 'south', 'west', 'up', 'down']
 
 class Item:
@@ -92,8 +92,12 @@ def show_help() -> None:
           f"{platform.python_revision()})")
 
     print()
+    print("Enter the following commands to perform actions.")
+    print()
     print("look - shows room name and description.")
     print("go <direction: str> - travels in the specified direction.")
+    print("  Valid directions are 'north', 'south', 'east', 'west', " +
+          "'up', 'down'.")
     print("pickup <item: str> - picks up the item.")
     print("drop <item: str> - drops the item.")
     print("inventory - shows inventory.")
@@ -211,6 +215,7 @@ def get_map_data(mapfile: str) -> tuple:
     return rooms, items, metadata
 
 def main() -> None:
+    print("Welcome. Type 'help' for help.")
     print()
 
     game_map, items, metadata = get_map_data("map.json")
@@ -297,8 +302,13 @@ def main() -> None:
             if len(command) < 2:
                 print("Go where?")
                 continue
+            
             direction = command[1]
-            new_room_number = get_new_room_number(game_map, current_room, direction)
+            new_room_number = get_new_room_number(
+                game_map,
+                current_room,
+                direction
+            )
 
             if new_room_number == -1:
                 continue
