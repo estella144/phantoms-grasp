@@ -73,7 +73,15 @@
             "lit": true,
             "locked": true,
             "exits": {"west": 4},
-            "items": []
+            "items": [
+                {
+                    "name": "Aura",
+                    "description": "Good job!",
+                    "type": "Item",
+                    "is_held": false,
+                    "provides_light": false
+                }
+            ]
         }
     ]
 }
